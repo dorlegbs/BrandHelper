@@ -1,95 +1,113 @@
 import streamlit as st
 from datetime import datetime, timedelta
-from monitor import verificar_crise
+from monitor import verificar_crise, buscar_mencoes_dia
+import matplotlib.pyplot as plt
 
 # =============================
-# CONFIGURAÇÃO DA PÁGINA
+# CONFIG
 # =============================
 st.set_page_config(
     page_title="Brand Watch 🚨",
     page_icon="🚨",
-    layout="centered"
+    layout="wide"
 )
 
 # =============================
-# ESTILO (DEIXA BONITO)
+# SIDEBAR
 # =============================
-st.markdown("""
-<style>
-.big-title {
-    font-size: 40px;
-    font-weight: bold;
-    color: #ff4b4b;
-}
-.card {
-    padding: 20px;
-    border-radius: 12px;
-    background-color: #f5f5f5;
-    margin-bottom: 10px;
-}
-</style>
-""", unsafe_allow_html=True)
+st.sidebar.title("⚙️ Configurações")
+
+marcas_disponiveis = ["Nike", "Adidas", "Petrobras", "Apple", "Google"]
+
+marca = st.sidebar.selectbox(
+    "🏷️ Escolha uma marca",
+    marcas_disponiveis
+)
+
+dias = st.sidebar.slider(
+    "📅 Quantos dias analisar",
+    2, 7, 3
+)
+
+limite = st.sidebar.slider(
+    "🚨 Limite de alerta (%)",
+    1, 100, 20
+)
+
+st.sidebar.markdown("---")
+st.sidebar.caption("Selecione os parâmetros e visualize os dados")
 
 # =============================
 # HEADER
 # =============================
-st.markdown('<p class="big-title">🚨 Brand Watch Dashboard</p>', unsafe_allow_html=True)
-st.caption("Monitoramento inteligente de crises de marca em tempo real")
+st.title("🚨 Brand Watch Dashboard")
+st.markdown("Monitoramento de menções e detecção de picos")
 
 st.markdown("---")
 
 # =============================
-# INPUTS
+# COLETAR DADOS
 # =============================
-marca = st.text_input("🏷️ Marca", value="Nike")
+dados = []
+datas = []
 
-col1, col2 = st.columns(2)
+with st.spinner("Buscando dados..."):
+    for i in range(dias):
+        dia = datetime.now() - timedelta(days=i)
+        label = dia.strftime("%d/%m")
+        mencoes = buscar_mencoes_dia(marca, i)
 
-with col1:
-    d1 = st.number_input("📅 Dia 1 (dias atrás)", 0, 30, 1)
+        datas.append(label)
+        dados.append(mencoes)
 
-with col2:
-    d2 = st.number_input("📅 Dia 2 (dias atrás)", 0, 30, 2)
+# inverter ordem (mais antigo → mais recente)
+datas = datas[::-1]
+dados = dados[::-1]
 
-limite = st.slider("🚨 Limite de alerta (%)", 1, 100, 20)
+# =============================
+# MÉTRICAS
+# =============================
+col1, col2, col3 = st.columns(3)
+
+variacao = verificar_crise(marca, limite)
+
+col1.metric("📊 Menções hoje", dados[-1])
+col2.metric("📊 Menções ontem", dados[-2] if len(dados) > 1 else 0)
+col3.metric("📈 Variação", f"{variacao:+.1f}%")
+
+# =============================
+# ALERTA
+# =============================
+if variacao >= limite:
+    st.error(f"🚨 ALERTA DE CRISE: aumento de {variacao:+.1f}%")
+else:
+    st.success("✅ Situação normal")
 
 st.markdown("---")
 
 # =============================
-# BOTÃO
+# GRÁFICO
 # =============================
-if st.button("🔍 Analisar agora"):
+st.subheader("📈 Evolução de menções")
 
-    if d1 == d2:
-        st.error("Escolha dois dias diferentes!")
-    else:
-        with st.spinner("Analisando dados..."):
-            variacao = verificar_crise(marca, limite, d1, d2)
+fig, ax = plt.subplots()
+ax.plot(datas, dados, marker='o')
+ax.set_xlabel("Data")
+ax.set_ylabel("Menções")
+ax.set_title(f"Menções de {marca}")
 
-        # Datas
-        data_1 = (datetime.now() - timedelta(days=d1)).strftime("%d/%m/%Y")
-        data_2 = (datetime.now() - timedelta(days=d2)).strftime("%d/%m/%Y")
+st.pyplot(fig)
 
-        st.markdown("## 📊 Resultado")
+# =============================
+# TABELA
+# =============================
+st.subheader("📋 Dados detalhados")
 
-        # Cards
-        st.markdown(f"""
-        <div class="card">
-        <b>Marca:</b> {marca} <br>
-        <b>Comparação:</b> {data_1} vs {data_2} <br>
-        <b>Variação:</b> {variacao:+.1f}%
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Status
-        if variacao >= limite:
-            st.error(f"🚨 ALERTA DE CRISE! Pico de {variacao:+.1f}%")
-        else:
-            st.success(f"✅ Situação normal ({variacao:+.1f}%)")
-
-st.markdown("---")
+for d, m in zip(datas, dados):
+    st.write(f"{d} → {m} menções")
 
 # =============================
 # RODAPÉ
 # =============================
-st.caption("Desenvolvido com Streamlit | Monitoramento automatizado de mídia")
+st.markdown("---")
+st.caption("Dashboard interativo | Monitoramento de mídia em tempo real")
