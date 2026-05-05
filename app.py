@@ -9,7 +9,7 @@ import random
 # CONFIG
 # =============================
 st.set_page_config(
-    page_title="Brand Watch 🚨",
+    page_title="Brand Watch",
     page_icon="🚨",
     layout="wide"
 )
@@ -21,16 +21,16 @@ st.sidebar.title("⚙️ Configurações")
 
 marcas_disponiveis = ["Nike", "Adidas", "Petrobras", "Apple", "Google"]
 
-marca = st.sidebar.selectbox("🏷️ Marca", marcas_disponiveis)
+marca = st.sidebar.selectbox("Marca", marcas_disponiveis)
 
-dias = st.sidebar.slider("📅 Dias analisados", 2, 7, 3)
+dias = st.sidebar.slider("Dias analisados", 2, 7, 3)
 
-limite = st.sidebar.slider("🚨 Limite de alerta (%)", 1, 100, 20)
+limite = st.sidebar.slider("Limite de alerta (%)", 1, 100, 20)
 
 # =============================
 # HEADER
 # =============================
-st.title("🚨 Brand Watch Dashboard")
+st.title("Brand Watch Dashboard")
 st.markdown("Monitoramento inteligente de menções")
 
 st.markdown("---")
@@ -60,24 +60,24 @@ col1, col2, col3 = st.columns(3)
 
 variacao = verificar_crise(marca, limite)
 
-col1.metric("📊 Hoje", dados[-1])
-col2.metric("📊 Ontem", dados[-2] if len(dados) > 1 else 0)
-col3.metric("📈 Variação", f"{variacao:+.1f}%")
+col1.metric("Hoje", dados[-1])
+col2.metric("Ontem", dados[-2] if len(dados) > 1 else 0)
+col3.metric("Variação", f"{variacao:+.1f}%")
 
 # =============================
 # ALERTA
 # =============================
 if variacao >= limite:
-    st.error(f"🚨 ALERTA: aumento de {variacao:+.1f}%")
+    st.error(f"ALERTA: aumento de {variacao:+.1f}%")
 else:
-    st.success("✅ Situação normal")
+    st.success("Situação normal")
 
 st.markdown("---")
 
 # =============================
 # GRÁFICO (PLOTLY)
 # =============================
-st.subheader("📈 Evolução de menções")
+st.subheader("Evolução de menções")
 
 fig = px.line(
     x=datas,
@@ -91,7 +91,7 @@ st.plotly_chart(fig, use_container_width=True)
 # =============================
 # HEATMAP (REDES)
 # =============================
-st.subheader("🔥 Distribuição por redes")
+st.subheader("Distribuição por redes")
 
 redes = ["Twitter", "Instagram", "Facebook", "YouTube", "TikTok"]
 
