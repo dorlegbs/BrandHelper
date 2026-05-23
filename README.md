@@ -1,4 +1,4 @@
-# Test_2_BrandHelper
+# BrandHelper
 
 Produzido por Gabriela Dorle - Estudante da Fundação Getúlio Vargas
 
